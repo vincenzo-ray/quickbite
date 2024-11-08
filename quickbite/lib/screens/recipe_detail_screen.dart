@@ -1,19 +1,30 @@
-// recipe_details_screen.dart
-
 import 'package:flutter/material.dart';
-import 'package:flutter_html/flutter_html.dart'; // Import flutter_html to handle HTML content
-import '../services/api_services.dart'; // Import API service to fetch recipe details
+import 'package:flutter_html/flutter_html.dart';
+import '../services/api_services.dart';
 
-// RecipeDetailsScreen shows detailed information about a selected recipe,
-// including nutritional info and instructions, by fetching data from the API.
+/// RecipeDetailsScreen displays detailed information for a specific recipe, including:
+/// - An image of the recipe
+/// - Nutritional information
+/// - Cooking instructions
+/// 
+/// This screen is navigated to from RecipeListScreen when a user selects a recipe.
 class RecipeDetailsScreen extends StatelessWidget {
-  final int recipeId; // ID of the recipe to fetch details
-  final String title; // Title of the recipe for AppBar
+  // Unique ID of the recipe to fetch details for
+  final int recipeId;
+  // Title of the recipe, displayed in the app bar
+  final String title;
 
-  // Constructor requiring recipe ID and title
-  const RecipeDetailsScreen({Key? key, required this.recipeId, required this.title}) : super(key: key);
+  // Constructor with required parameters and the super.key parameter
+  // to properly use keys with this widget.
+  const RecipeDetailsScreen({
+    super.key, // Use super parameter for `key`
+    required this.recipeId,
+    required this.title,
+  });
 
-  // Asynchronously fetches recipe details using the recipe ID
+  // Private method to fetch recipe details from the API.
+  // This method calls ApiService.fetchRecipeDetails, which connects
+  // to the Spoonacular API to retrieve detailed information about the recipe.
   Future<Map<String, dynamic>> _fetchRecipeDetails() async {
     return await ApiService.fetchRecipeDetails(recipeId);
   }
@@ -22,36 +33,36 @@ class RecipeDetailsScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(title), // AppBar title shows the recipe name
+        title: Text(title), // Display the recipe title in the app bar
       ),
       body: FutureBuilder<Map<String, dynamic>>(
-        future: _fetchRecipeDetails(),
+        future: _fetchRecipeDetails(), // Calls the method to fetch recipe details
         builder: (context, snapshot) {
           // Show a loading spinner while data is being fetched
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(child: CircularProgressIndicator());
-          } 
-          // Display error message if there was an error during fetching
+          }
+          // Display error message if there's an error during fetching
           else if (snapshot.hasError) {
             return Center(child: Text("Error: ${snapshot.error}"));
-          } 
-          // Show a "No details available" message if no data is found
+          }
+          // Display message if no data is found
           else if (!snapshot.hasData) {
             return const Center(child: Text("No details available"));
           }
 
-          // Extract recipe details from the fetched data
+          // Unpack the data from the API response
           final recipeDetails = snapshot.data!;
-          final nutrition = recipeDetails['nutrition']?['nutrients'] ?? []; // Nutritional data
-          final instructions = recipeDetails['instructions'] ?? 'No instructions available'; // Instructions text
+          final nutrition = recipeDetails['nutrition']?['nutrients'] ?? [];
+          final instructions = recipeDetails['instructions'] ?? 'No instructions available';
 
-          // Display the fetched details in a scrollable layout
+          // Build the layout for recipe details using a ScrollView
           return SingleChildScrollView(
             padding: const EdgeInsets.all(16.0),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Display recipe image or fallback icon
+                // Recipe image, with a placeholder icon if the image fails to load
                 Image.network(
                   recipeDetails['image'],
                   height: 200,
@@ -60,26 +71,26 @@ class RecipeDetailsScreen extends StatelessWidget {
                 ),
                 const SizedBox(height: 16),
 
-                // Display recipe title
+                // Recipe title
                 Text(
                   recipeDetails['title'],
                   style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
                 ),
                 const SizedBox(height: 16),
 
-                // Display nutritional information header
-                Text("Nutritional Information:", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-                // List nutritional data, showing "Unknown" for missing fields
+                // Nutritional information section
+                const Text("Nutritional Information:", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                // Loop through each nutrient and display its name, amount, and unit
                 for (var nutrient in nutrition)
                   Text(
                     "${nutrient['name'] ?? 'Unknown'}: ${nutrient['amount'] ?? 'N/A'} ${nutrient['unit'] ?? ''}",
-                    style: TextStyle(fontSize: 16),
+                    style: const TextStyle(fontSize: 16),
                   ),
                 const SizedBox(height: 16),
 
-                // Display instructions header
-                Text("Instructions:", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-                // Use Html widget to format instructions content
+                // Cooking instructions section
+                const Text("Instructions:", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                // Display instructions as HTML, allowing rich text formatting
                 Html(data: instructions),
               ],
             ),
