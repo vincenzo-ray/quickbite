@@ -1,5 +1,5 @@
 import 'dart:convert';
-import 'dart:io';
+import 'package:flutter/services.dart' show rootBundle; // Import rootBundle to load assets
 import 'package:http/http.dart' as http;
 import 'package:logger/logger.dart';
 import '../recipe/recipe.dart';
@@ -8,11 +8,11 @@ class ApiService {
   static const String _baseUrl = 'https://api.spoonacular.com/recipes';
   static final Logger _logger = Logger(); // Initialize the logger
 
-  // Method to load the API key from api_key.txt file
+  // Method to load the API key from api_key.txt file using rootBundle
   static Future<String> _loadApiKey() async {
     try {
-      final file = File('lib/services/api_key.txt'); // path to api key
-      return await file.readAsString();
+      final apiKey = await rootBundle.loadString('assets/api_key.txt'); // Use rootBundle to load API key
+      return apiKey;
     } catch (e) {
       _logger.e("Failed to load API key: $e"); // Log as an error
       throw Exception('Failed to load API key: $e');

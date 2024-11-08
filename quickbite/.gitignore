@@ -9,7 +9,10 @@
 .history
 .svn/
 migrate_working_dir/
+
+# API key files
 lib/services/api_key.txt
+assets/api_key.txt
 
 # IntelliJ related
 *.iml
