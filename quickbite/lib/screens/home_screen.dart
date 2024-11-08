@@ -1,5 +1,3 @@
-// home_screen.dart
-
 import 'package:flutter/material.dart';
 import 'recipe_results_screen.dart';
 import '../widgets/search_bar.dart';
@@ -7,11 +5,15 @@ import '../widgets/search_bar.dart';
 // HomeScreen serves as the starting point of the QuickBite app,
 // where users can enter ingredients and find matching recipes.
 class HomeScreen extends StatefulWidget {
+  // Use super parameter for key in the constructor
+  const HomeScreen({super.key});
+
   @override
-  _HomeScreenState createState() => _HomeScreenState();
+  HomeScreenState createState() => HomeScreenState();
 }
 
-class _HomeScreenState extends State<HomeScreen> {
+// State class for HomeScreen, holding and managing ingredient list state
+class HomeScreenState extends State<HomeScreen> {
   // List to store the ingredients entered by the user
   final List<String> ingredients = [];
 
