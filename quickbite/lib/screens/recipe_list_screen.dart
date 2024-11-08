@@ -1,70 +1,62 @@
-// recipe_details_screen.dart
 import 'package:flutter/material.dart';
-import 'package:flutter_html/flutter_html.dart';
-import '../services/api_services.dart';
+import '../recipe/recipe.dart'; // Import the Recipe model class
+import 'recipe_detail_screen.dart'; // Import the RecipeDetailsScreen for navigation
+import 'dart:developer' as developer; // use log for print statements
 
-class RecipeDetailsScreen extends StatelessWidget {
-  final int recipeId;
-  final String title;
+/// RecipeListScreen displays a list of recipes provided from another screen.
+/// It uses ListView to show recipes with a thumbnail, title, and ingredient count.
+class RecipeListScreen extends StatelessWidget {
+  final List<Recipe> recipes;
 
-  const RecipeDetailsScreen({Key? key, required this.recipeId, required this.title}) : super(key: key);
+  // Constructor with super.key for consistency and to allow for unique identification of the widget
+  const RecipeListScreen({super.key, required this.recipes});
 
-  Future<Map<String, dynamic>> _fetchRecipeDetails() async {
-    return await ApiService.fetchRecipeDetails(recipeId);
-  }
+// Inside RecipeListScreen class
+@override
+Widget build(BuildContext context) {
+  // Log the number of recipes for debugging purposes (remove or configure logging level in production)
+  developer.log("Number of recipes to display: ${recipes.length}", name: 'RecipeListScreen');
 
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(title),
-      ),
-      body: FutureBuilder<Map<String, dynamic>>(
-        future: _fetchRecipeDetails(),
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
-          } else if (snapshot.hasError) {
-            return Center(child: Text("Error: ${snapshot.error}"));
-          } else if (!snapshot.hasData) {
-            return const Center(child: Text("No details available"));
-          }
+  return Scaffold(
+    appBar: AppBar(
+      title: const Text('Recipe List'), // App bar title for the screen
+    ),
+    // Check if there are recipes to display; if not, show a message
+    body: recipes.isNotEmpty 
+      ? ListView.builder(
+          itemCount: recipes.length,
+          itemBuilder: (context, index) {
+            final recipe = recipes[index]; // Get the recipe at the current index
 
-          final recipeDetails = snapshot.data!;
-          final nutrition = recipeDetails['nutrition']?['nutrients'] ?? [];
-          final instructions = recipeDetails['instructions'] ?? 'No instructions available';
+            return ListTile(
+              // Display recipe image or show an icon if the image fails to load
+              leading: Image.network(
+                recipe.imageUrl,
+                width: 50,
+                height: 50,
+                fit: BoxFit.cover,
+                errorBuilder: (context, error, stackTrace) => const Icon(Icons.image),
+              ),
+              // Display recipe title and ingredient count
+              title: Text(recipe.title),
+              subtitle: Text('${recipe.usedIngredientCount} ingredients used'),
 
-          return SingleChildScrollView(
-            padding: const EdgeInsets.all(16.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Image.network(
-                  recipeDetails['image'],
-                  height: 200,
-                  fit: BoxFit.cover,
-                  errorBuilder: (context, error, stackTrace) => const Icon(Icons.broken_image),
-                ),
-                const SizedBox(height: 16),
-                Text(
-                  recipeDetails['title'],
-                  style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-                ),
-                const SizedBox(height: 16),
-                Text("Nutritional Information:", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-                for (var nutrient in nutrition)
-                  Text(
-                    "${nutrient['name'] ?? 'Unknown'}: ${nutrient['amount'] ?? 'N/A'} ${nutrient['unit'] ?? ''}",
-                    style: TextStyle(fontSize: 16),
+              // Navigate to RecipeDetailsScreen when a recipe is tapped
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => RecipeDetailsScreen(
+                      recipeId: recipe.id,
+                      title: recipe.title,
+                    ),
                   ),
-                const SizedBox(height: 16),
-                Text("Instructions:", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-                Html(data: instructions),
-              ],
-            ),
-          );
-        },
-      ),
-    );
-  }
+                );
+              },
+            );
+          },
+        )
+      : const Center(child: Text('No Recipes found')), // Show this message if no recipes are available
+  );
+ }
 }
