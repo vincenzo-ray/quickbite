@@ -2,7 +2,7 @@
 
 import 'package:flutter/material.dart';
 import '../services/api_services.dart';
-import '../models/recipe.dart';
+import '../recipe/recipe.dart';
 import '../screens/recipe_detail_screen.dart';
 
 // RecipeResultsScreen shows a list of recipes based on the user's entered ingredients.
