@@ -1,10 +1,12 @@
 import 'dart:convert';
 import 'dart:io';
 import 'package:http/http.dart' as http;
+import 'package:logger/logger.dart';
 import '../recipe/recipe.dart';
 
 class ApiService {
   static const String _baseUrl = 'https://api.spoonacular.com/recipes';
+  static final Logger _logger = Logger(); // Initialize the logger
 
   // Method to load the API key from api_key.txt file
   static Future<String> _loadApiKey() async {
@@ -12,6 +14,7 @@ class ApiService {
       final file = File('lib/services/api_key.txt'); // path to api key
       return await file.readAsString();
     } catch (e) {
+      _logger.e("Failed to load API key: $e"); // Log as an error
       throw Exception('Failed to load API key: $e');
     }
   }
@@ -22,21 +25,21 @@ class ApiService {
     final ingredientsString = ingredients.join(',');
     final url = '$_baseUrl/findByIngredients?apiKey=$apiKey&ingredients=$ingredientsString&number=10&ranking=1&ignorePantry=true';
 
-    print("Requesting URL: $url");  // Log the complete request URL
+    _logger.i("Requesting URL: $url"); // Log as informational
     final response = await http.get(Uri.parse(url));
 
     if (response.statusCode == 200) {
       try {
         List<dynamic> data = jsonDecode(response.body);
         final recipes = data.map((recipe) => Recipe.fromJson(recipe)).toList();
-        print("Recipes found: ${recipes.length}");  // Check the count of recipes
+        _logger.i("Recipes found: ${recipes.length}"); // Log count as informational
         return recipes;
       } catch (e) {
-        print("Error parsing JSON: $e");
+        _logger.e("Error parsing JSON: $e"); // Log parsing error
         throw Exception('Failed to parse recipe data');
       }
     } else {
-      print("Request failed with status: ${response.statusCode}");
+      _logger.w("Request failed with status: ${response.statusCode}"); // Log as a warning
       throw Exception('Failed to load recipes');
     }
   }
@@ -46,18 +49,18 @@ class ApiService {
     final apiKey = await _loadApiKey();
     final url = '$_baseUrl/$recipeId/information?apiKey=$apiKey&includeNutrition=true';
 
-    print("Fetching recipe details for ID: $recipeId");  // Log the detail request
+    _logger.i("Fetching recipe details for ID: $recipeId"); // Log detail request
     final response = await http.get(Uri.parse(url));
 
     if (response.statusCode == 200) {
       try {
         return jsonDecode(response.body);
       } catch (e) {
-        print("Error parsing recipe details JSON: $e");
+        _logger.e("Error parsing recipe details JSON: $e"); // Log parsing error
         throw Exception('Failed to parse recipe details');
       }
     } else {
-      print("Request for recipe details failed with status: ${response.statusCode}");
+      _logger.w("Request for recipe details failed with status: ${response.statusCode}"); // Log as a warning
       throw Exception('Failed to load recipe details');
     }
   }
