@@ -5,14 +5,14 @@ class IngredientSearchBar extends StatefulWidget {
   // Callback function to notify the parent widget when an ingredient is added
   final Function(String) onIngredientAdded;
 
-  // Constructor with required callback function
-  const IngredientSearchBar({Key? key, required this.onIngredientAdded}) : super(key: key);
+  // Constructor with required callback function and key parameter as super
+  const IngredientSearchBar({super.key, required this.onIngredientAdded});
 
   @override
-  _IngredientSearchBarState createState() => _IngredientSearchBarState();
+  IngredientSearchBarState createState() => IngredientSearchBarState();
 }
 
-class _IngredientSearchBarState extends State<IngredientSearchBar> {
+class IngredientSearchBarState extends State<IngredientSearchBar> {
   // Text controller to capture input from the user
   final TextEditingController _controller = TextEditingController();
 
@@ -66,7 +66,7 @@ class _IngredientSearchBarState extends State<IngredientSearchBar> {
           controller: _controller,
           onChanged: _onTextChanged, // Filter suggestions as user types
           onSubmitted: _onSubmitManualEntry, // Handle manual entry on enter key
-          decoration: InputDecoration(
+          decoration: const InputDecoration(
             labelText: 'Enter your ingredients here', // Placeholder text
             border: OutlineInputBorder(),
           ),
