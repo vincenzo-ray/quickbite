@@ -64,4 +64,27 @@ class ApiService {
       throw Exception('Failed to load recipe details');
     }
   }
+
+  // Method to fetch autocomplete suggestions for ingredients
+  static Future<List<String>> fetchIngredientSuggestions(String query) async {
+    final apiKey = await _loadApiKey();
+    final url = 'https://api.spoonacular.com/food/ingredients/autocomplete?apiKey=$apiKey&query=$query&number=10';
+
+    final response = await http.get(Uri.parse(url));
+
+    if (response.statusCode == 200) {
+      try {
+        List<dynamic> data = jsonDecode(response.body);
+        final suggestions = data.map((item) => item['name'] as String).toList();
+        _logger.i("Suggestions found: ${suggestions.length}"); // Log count
+        return suggestions;
+      } catch (e) {
+        _logger.e("Error parsing JSON: $e"); // Log parsing error
+        throw Exception('Failed to parse suggestion data');
+      }
+    } else {
+      _logger.w("Request failed with status: ${response.statusCode} : ${jsonDecode(response.body)}"); // Log as a warning
+      throw Exception('Failed to load suggestions');
+    }
+  }
 }

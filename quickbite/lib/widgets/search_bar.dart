@@ -1,5 +1,6 @@
 // ingredient_search_bar.dart
 import 'package:flutter/material.dart';
+import '../services/api_services.dart';
 
 class IngredientSearchBar extends StatefulWidget {
   // Callback function to notify the parent widget when an ingredient is added
@@ -16,22 +17,31 @@ class IngredientSearchBarState extends State<IngredientSearchBar> {
   // Text controller to capture input from the user
   final TextEditingController _controller = TextEditingController();
 
-  // Sample list of ingredient suggestions
-  final List<String> _suggestions = [
-    'Chicken', 'Chicken Breast', 'Rice', 'Beans', 'Beef', 'Carrot', 'Tomato', 'Broccoli'
-  ];
+  // List of suggestions fetched from the API based on user input
+  List<String> _suggestions = [];
 
-  // List of suggestions filtered based on user input
-  List<String> _filteredSuggestions = [];
+  // Function to fetch suggestions from the API
+  Future<void> _fetchSuggestions(String input) async {
+    try {
+      // Fetch suggestions from the ApiService and update the state with the results
+      final suggestions = await ApiService.fetchIngredientSuggestions(input);
+      setState(() {
+        _suggestions = suggestions;
+      });
+    } catch (e) {
+      print("Error fetching suggestions: $e");
+    }
+  }
 
-  // Function to filter suggestions as user types
+  // Handle text changes and fetch new suggestions
   void _onTextChanged(String input) {
-    setState(() {
-      // Filter suggestions based on the input, ignoring case
-      _filteredSuggestions = _suggestions
-          .where((ingredient) => ingredient.toLowerCase().contains(input.toLowerCase()))
-          .toList();
-    });
+    if (input.isNotEmpty) {
+      _fetchSuggestions(input); // Fetch suggestions when there is input
+    } else {
+      setState(() {
+        _suggestions = []; // Clear suggestions when the input is empty
+      });
+    }
   }
 
   // Function called when a suggestion is tapped
@@ -40,7 +50,7 @@ class IngredientSearchBarState extends State<IngredientSearchBar> {
     widget.onIngredientAdded(suggestion);
     _controller.clear(); // Clear the input field after selection
     setState(() {
-      _filteredSuggestions = []; // Reset suggestions after selection
+      _suggestions = []; // Reset suggestions after selection
     });
   }
 
@@ -51,7 +61,7 @@ class IngredientSearchBarState extends State<IngredientSearchBar> {
       widget.onIngredientAdded(input);
       _controller.clear(); // Clear the input field after submission
       setState(() {
-        _filteredSuggestions = []; // Reset suggestions after submission
+        _suggestions = []; // Reset suggestions after submission
       });
     }
   }
@@ -71,17 +81,27 @@ class IngredientSearchBarState extends State<IngredientSearchBar> {
             border: OutlineInputBorder(),
           ),
         ),
+
         // Display filtered suggestions below the text field if any
-        if (_filteredSuggestions.isNotEmpty)
-          Column(
-            children: _filteredSuggestions.map((suggestion) {
-              return ListTile(
-                title: Text(suggestion),
-                onTap: () => _onSuggestionSelected(suggestion), // Add ingredient on tap
-              );
-            }).toList(),
+        if (_suggestions.isNotEmpty)
+          Container(
+            height: 200.0, // Set height for the suggestions box
+            decoration: BoxDecoration(
+              border: Border.all(color: Colors.grey, width: 2.0), // Add border color and width
+              borderRadius: BorderRadius.circular(10.0), // rounded corners
+            ),
+            child: ListView.builder(
+              itemCount: _suggestions.length,
+              itemBuilder: (context, index) {
+                return ListTile(
+                  title: Text(_suggestions[index]),
+                  onTap: () => _onSuggestionSelected(_suggestions[index]), // Add ingredient on tap
+                );
+              },
+            ),
           ),
       ],
     );
   }
 }
+
