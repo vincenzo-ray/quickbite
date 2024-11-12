@@ -2,49 +2,49 @@ import 'package:flutter/material.dart';
 import 'recipe_results_screen.dart';
 import '../widgets/search_bar.dart';
 
-// HomeScreen serves as the starting point of the QuickBite app,
-// where users can enter ingredients and find matching recipes.
 class HomeScreen extends StatefulWidget {
-  // Use super parameter for key in the constructor
   const HomeScreen({super.key});
 
   @override
   HomeScreenState createState() => HomeScreenState();
 }
 
-// State class for HomeScreen, holding and managing ingredient list state
 class HomeScreenState extends State<HomeScreen> {
-  // List to store the ingredients entered by the user
   final List<String> ingredients = [];
+  String? selectedDiet;
 
-  // Adds a new ingredient to the list if it's not empty
   void _addIngredient(String ingredient) {
     if (ingredient.isNotEmpty) {
       setState(() {
-        ingredients.add(ingredient); // Updates the ingredient list
+        ingredients.add(ingredient);
       });
     }
   }
 
-  // Removes an ingredient from the list
   void _removeIngredient(String ingredient) {
     setState(() {
-      ingredients.remove(ingredient); // Updates the list to reflect removal
+      ingredients.remove(ingredient);
     });
   }
 
-  // Navigates to the RecipeResultsScreen with the entered ingredients
+  void _setDietFilter(String? diet) {
+    setState(() {
+      selectedDiet = diet;
+    });
+  }
+
   void _findMeals() {
     if (ingredients.isNotEmpty) {
-      // Checks if the list has at least one ingredient
       Navigator.push(
         context,
         MaterialPageRoute(
-          builder: (context) => RecipeResultsScreen(ingredients: ingredients),
+          builder: (context) => RecipeResultsScreen(
+            ingredients: ingredients,
+            dietFilter: selectedDiet,
+          ),
         ),
       );
     } else {
-      // Shows an alert if no ingredients were added
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text("Please add at least one ingredient.")),
       );
@@ -54,64 +54,123 @@ class HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      // AppBar for the HomeScreen with a title and info icon
-      appBar: AppBar(
-        title: const Text("QuickBite"),
-        backgroundColor: Colors.orangeAccent,
-        actions: [
-          // Info button shows an AlertDialog with usage instructions
-          IconButton(
-            icon: const Icon(Icons.info_outline),
-            onPressed: () {
-              showDialog(
-                context: context,
-                builder: (context) => const AlertDialog(
-                  title: Text("How to use QuickBite"),
-                  content: Text("Enter ingredients, then press 'Find Meals' to get recipes."),
-                ),
-              );
-            },
-          ),
-        ],
-      ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Custom IngredientSearchBar widget for inputting ingredients
-            IngredientSearchBar(
-              onIngredientAdded: _addIngredient, // Calls _addIngredient when a new ingredient is entered
-            ),
-            const SizedBox(height: 10),
-            // Wrap widget displays the list of entered ingredients as chips
-            Wrap(
-              spacing: 8, // Spacing between chips
-              children: ingredients.map((ingredient) {
-                return Chip(
-                  label: Text(ingredient), // Displays ingredient name
-                  deleteIcon: const Icon(Icons.close), // 'X' icon for deletion
-                  onDeleted: () => _removeIngredient(ingredient), // Deletes the ingredient from the list
-                );
-              }).toList(),
-            ),
-            const Spacer(), // Adds space between the chips and the "Find Meals" button
-            Center(
-              // Elevated button to initiate the recipe search
-              child: ElevatedButton(
-                onPressed: _findMeals, // Calls _findMeals to proceed with the search
-                style: ElevatedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
-                  backgroundColor: Colors.green,
-                ),
-                child: const Text(
-                  "Find Meals",
-                  style: TextStyle(fontSize: 18), // Button text styling
-                ),
+      backgroundColor: Colors.grey[100], // Light background for a modern look
+      body: Column(
+        children: [
+          // Header section with gradient and custom-styled "QuickBite" title
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 32),
+            decoration: const BoxDecoration(
+              gradient: LinearGradient(
+                colors: [Colors.deepOrangeAccent, Colors.orangeAccent],
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+              ),
+              borderRadius: BorderRadius.vertical(
+                bottom: Radius.circular(24),
               ),
             ),
-          ],
-        ),
+            child: SafeArea(
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  // App title with custom font and style for a professional look
+                  const Text(
+                    "QuickBite",
+                    style: TextStyle(
+                      fontSize: 28,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                    ),
+                  ),
+                  // Info icon to show usage instructions
+                  IconButton(
+                    icon: const Icon(Icons.info_outline, color: Colors.white),
+                    onPressed: () {
+                      showDialog(
+                        context: context,
+                        builder: (context) => const AlertDialog(
+                          title: Text("How to use QuickBite"),
+                          content: Text(
+                            "Enter ingredients, optionally select a diet filter, "
+                            "then press 'Find Meals' to get recipes.",
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(height: 24), // Space between header and content
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16.0),
+            child: Column(
+              children: [
+                // Ingredient search bar section with slight shadow and rounded corners
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(12),
+                    boxShadow: const [
+                      BoxShadow(
+                        color: Colors.black12,
+                        blurRadius: 10,
+                        offset: Offset(0, 4),
+                      ),
+                    ],
+                  ),
+                  child: IngredientSearchBar(
+                    onIngredientAdded: _addIngredient,
+                    onDietFilterChanged: _setDietFilter,
+                  ),
+                ),
+                const SizedBox(height: 20),
+                // Display entered ingredients as rounded chips
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: ingredients.map((ingredient) {
+                      return Chip(
+                        label: Text(
+                          ingredient,
+                          style: const TextStyle(color: Colors.blueGrey),
+                        ),
+                        deleteIcon: const Icon(Icons.close, size: 18),
+                        onDeleted: () => _removeIngredient(ingredient),
+                        backgroundColor: Colors.blue[50],
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                          side: BorderSide(color: Colors.blueGrey.shade200),
+                        ),
+                      );
+                    }).toList(),
+                  ),
+                ),
+                const SizedBox(height: 30),
+                // "Find Meals" button for searching recipes
+                ElevatedButton(
+                  onPressed: _findMeals,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.green,
+                    padding: const EdgeInsets.symmetric(horizontal: 48, vertical: 16),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                  child: const Text(
+                    "Find Meals",
+                    style: TextStyle(fontSize: 18, color: Colors.white),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }

@@ -5,9 +5,16 @@ import '../services/api_services.dart';
 class IngredientSearchBar extends StatefulWidget {
   // Callback function to notify the parent widget when an ingredient is added
   final Function(String) onIngredientAdded;
+  
+  // Callback function to notify the parent widget when a diet filter is selected
+  final Function(String?) onDietFilterChanged; // Added diet filter callback
 
-  // Constructor with required callback function and key parameter as super
-  const IngredientSearchBar({super.key, required this.onIngredientAdded});
+  // Constructor with required callback functions and key parameter as super
+  const IngredientSearchBar({
+    super.key,
+    required this.onIngredientAdded,
+    required this.onDietFilterChanged,
+  });
 
   @override
   IngredientSearchBarState createState() => IngredientSearchBarState();
@@ -19,6 +26,24 @@ class IngredientSearchBarState extends State<IngredientSearchBar> {
 
   // List of suggestions fetched from the API based on user input
   List<String> _suggestions = [];
+
+  // Variable to store the selected diet filter
+  String? selectedDiet; // Store selected diet filter
+
+  // List of diet filter options for the dropdown menu
+  final List<String> dietOptions = [
+    'Gluten Free',
+    'Ketogenic',
+    'Vegetarian',
+    'Lacto-Vegetarian',
+    'Ovo-Vegetarian',
+    'Vegan',
+    'Pescetarian',
+    'Paleo',
+    'Primal',
+    'Low FODMAP',
+    'Whole30',
+  ];
 
   // Function to fetch suggestions from the API
   Future<void> _fetchSuggestions(String input) async {
@@ -88,7 +113,7 @@ class IngredientSearchBarState extends State<IngredientSearchBar> {
             height: 200.0, // Set height for the suggestions box
             decoration: BoxDecoration(
               border: Border.all(color: Colors.grey, width: 2.0), // Add border color and width
-              borderRadius: BorderRadius.circular(10.0), // rounded corners
+              borderRadius: BorderRadius.circular(10.0), // Rounded corners
             ),
             child: ListView.builder(
               itemCount: _suggestions.length,
@@ -100,8 +125,28 @@ class IngredientSearchBarState extends State<IngredientSearchBar> {
               },
             ),
           ),
+
+        // Dropdown menu for selecting a diet filter
+        Padding(
+          padding: const EdgeInsets.symmetric(vertical: 8.0), // Add padding for spacing
+          child: DropdownButton<String>(
+            hint: const Text("Select a Diet Filter"), // Placeholder text for dropdown
+            value: selectedDiet, // Current selected diet
+            onChanged: (String? newValue) {
+              setState(() {
+                selectedDiet = newValue;
+              });
+              widget.onDietFilterChanged(selectedDiet); // Pass selected diet to parent
+            },
+            items: dietOptions.map((String diet) {
+              return DropdownMenuItem<String>(
+                value: diet,
+                child: Text(diet),
+              );
+            }).toList(),
+          ),
+        ),
       ],
     );
   }
 }
-
