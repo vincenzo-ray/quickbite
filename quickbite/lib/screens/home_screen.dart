@@ -39,19 +39,13 @@ class HomeScreenState extends State<HomeScreen> {
   }
 
   void _findMeals() {
-    if (query.isNotEmpty) {
-      filters['query'] = query;
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (context) => RecipeResultsScreen(filters: filters),
-        ),
+    filters['query'] = query;
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => RecipeResultsScreen(filters: filters),
+      ),
       );
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Please enter a query.")),
-      );
-    }
   }
 
   @override
@@ -92,8 +86,8 @@ class HomeScreenState extends State<HomeScreen> {
                         builder: (context) => const AlertDialog(
                           title: Text("How to use QuickBite"),
                           content: Text(
-                            "Enter a query, optionally apply filters, "
-                                "then press 'Find Meals' to get recipes.",
+                            "- Got something in mind? Enter it in the search box.\n\n" "- Otherwise use the filters for a random search!\n\n"
+                                "- Press 'Find Meals' to get recipes.\n\n",
                           ),
                         ),
                       );

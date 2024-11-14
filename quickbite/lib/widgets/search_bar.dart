@@ -80,7 +80,7 @@ class QuerySearchBarState extends State<QuerySearchBar> {
           onChanged: _onTextChanged, // Filter suggestions as user types
           onSubmitted: _onSubmitQuery,
           decoration: const InputDecoration(
-            labelText: 'Enter your query here',
+            labelText: 'Enter your query or use the filters!',
             border: OutlineInputBorder(),
           ),
         ),
