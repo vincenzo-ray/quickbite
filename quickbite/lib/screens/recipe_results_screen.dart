@@ -4,19 +4,21 @@ import '../services/api_services.dart';
 import 'recipe_detail_screen.dart';
 
 class RecipeResultsScreen extends StatelessWidget {
-  final List<String> ingredients;
-  final String? dietFilter;
+  final Map<String, dynamic> filters;
 
-  const RecipeResultsScreen({
-    super.key,
-    required this.ingredients,
-    this.dietFilter,
-  });
+  const RecipeResultsScreen({super.key, required this.filters});
 
   Future<List<Recipe>> _fetchRecipes() async {
-    final recipes = await ApiService.searchRecipesByIngredients(
-      ingredients,
-      diet: dietFilter,
+    final recipes = await ApiService.searchRecipesComplex(
+      // added filters to API
+      query: filters['query'] ?? '',
+      cuisine: filters['cuisine'],
+      diet: filters['diet'],
+      intolerances: filters['intolerances'],
+      equipment: filters['equipment'],
+      includeIngredients: filters['includeIngredients'],
+      excludeIngredients: filters['excludeIngredients'],
+      type: filters['type'],
     );
 
     for (final recipe in recipes) {
@@ -34,7 +36,6 @@ class RecipeResultsScreen extends StatelessWidget {
       appBar: AppBar(
         title: const Text("Recipe Results"),
         backgroundColor: Colors.orangeAccent,
-        elevation: 0, // Flat AppBar for modern look
       ),
       body: FutureBuilder<List<Recipe>>(
         future: _fetchRecipes(),
@@ -74,7 +75,7 @@ class RecipeResultsScreen extends StatelessWidget {
                           height: 60,
                           fit: BoxFit.cover,
                           errorBuilder: (context, error, stackTrace) =>
-                              const Icon(Icons.broken_image, size: 60),
+                          const Icon(Icons.broken_image, size: 60),
                         ),
                       ),
                       const SizedBox(width: 16),
@@ -99,10 +100,10 @@ class RecipeResultsScreen extends StatelessWidget {
                                 if (tag.contains("Low Fat")) {
                                   tagColor = Colors.green;
                                 } else if (tag.contains("High Protein")) {
-                                tagColor = Colors.blue;
+                                  tagColor = Colors.blue;
                                 } else if (tag.contains("Low Carb")) {
-                                   tagColor = Colors.purple;
-                                } else { 
+                                  tagColor = Colors.purple;
+                                } else {
                                   tagColor = Colors.orange;
                                 }
                                 return Chip(
@@ -114,14 +115,14 @@ class RecipeResultsScreen extends StatelessWidget {
                                   ),
                                   padding: EdgeInsets.zero,
                                   materialTapTargetSize:
-                                      MaterialTapTargetSize.shrinkWrap,
+                                  MaterialTapTargetSize.shrinkWrap,
                                 );
                               }).toList(),
                             ),
                             const SizedBox(height: 8),
                             Text(
                               "Used Ingredients: ${recipe.usedIngredientCount}, "
-                              "Missing Ingredients: ${recipe.missedIngredientCount}",
+                                  "Missing Ingredients: ${recipe.missedIngredientCount}",
                               style: TextStyle(
                                 fontSize: 13,
                                 color: Colors.grey[600],

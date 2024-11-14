@@ -143,6 +143,29 @@ class ApiService {
     }
   }
 
+  // Query suggestions similar to ingredients suggestions
+  static Future<List<String>> fetchQuerySuggestions(String query) async {
+    final apiKey = await _loadApiKey();
+    final url = 'https://api.spoonacular.com/recipes/autocomplete?query=$query&number=10&apiKey=$apiKey';
+
+    final response = await http.get(Uri.parse(url));
+
+    if (response.statusCode == 200) {
+      try {
+        List<dynamic> data = jsonDecode(response.body);
+        final suggestions = data.map((item) => item['title'] as String).toList();
+        _logger.i("Suggestions found: ${suggestions.length}"); // Log count
+        return suggestions;
+      } catch (e) {
+        _logger.e("Error parsing JSON: $e");
+        throw Exception('Failed to parse query suggestion data');
+      }
+    } else {
+      _logger.w("Request failed with status: ${response.statusCode} : ${jsonDecode(response.body)}");
+      throw Exception('Failed to load query suggestions');
+    }
+  }
+
   // Method to fetch nutrition widget HTML for a recipe
   static Future<String> fetchNutritionWidgetHtml(String ingredientList, int servings) async {
     final apiKey = await _loadApiKey();
@@ -168,6 +191,70 @@ class ApiService {
     } else {
       _logger.w("Failed to load nutrition widget with status: ${response.statusCode}, message: ${response.body}");
       throw Exception('Failed to load nutrition widget');
+    }
+  }
+
+  // Search recipes using the complex search endpoint
+  static Future<List<Recipe>> searchRecipesComplex({
+    required String query,
+    String? cuisine,
+    String? diet,
+    String? intolerances,
+    String? equipment,
+    String? includeIngredients,
+    String? excludeIngredients,
+    String? type,
+    double? minCalories,
+    double? maxCalories,
+    double? minCarbs,
+    double? maxCarbs,
+    double? minProtein,
+    double? maxProtein,
+    double? minFat,
+    double? maxFat,
+    bool limitLicense = false,
+  }) async {
+    final apiKey = await _loadApiKey();
+
+    final queryParameters = {
+      'apiKey': apiKey,
+      'query': query,
+      if (cuisine != null && cuisine.isNotEmpty) 'cuisine': cuisine,
+      if (diet != null && diet.isNotEmpty) 'diet': diet,
+      if (intolerances != null && intolerances.isNotEmpty) 'intolerances': intolerances,
+      if (equipment != null && equipment.isNotEmpty) 'equipment': equipment,
+      if (includeIngredients != null && includeIngredients.isNotEmpty) 'includeIngredients': includeIngredients,
+      if (excludeIngredients != null && excludeIngredients.isNotEmpty) 'excludeIngredients': excludeIngredients,
+      if (type != null && type.isNotEmpty) 'type': type,
+      if (minCalories != null) 'minCalories': minCalories.toString(),
+      if (maxCalories != null) 'maxCalories': maxCalories.toString(),
+      if (minCarbs != null) 'minCarbs': minCarbs.toString(),
+      if (maxCarbs != null) 'maxCarbs': maxCarbs.toString(),
+      if (minProtein != null) 'minProtein': minProtein.toString(),
+      if (maxProtein != null) 'maxProtein': maxProtein.toString(),
+      if (minFat != null) 'minFat': minFat.toString(),
+      if (maxFat != null) 'maxFat': maxFat.toString(),
+      'number': '10',
+    };
+
+    final uri = Uri.https('api.spoonacular.com', '/recipes/complexSearch', queryParameters);
+    _logger.i("Requesting URL: $uri");
+
+    final response = await http.get(uri);
+
+    if (response.statusCode == 200) {
+      try {
+        final Map<String, dynamic> data = jsonDecode(response.body);
+        final recipes = (data['results'] as List).map((recipe) => Recipe.fromJson(recipe)).toList();
+        _logger.i("Recipes found: ${recipes.length}");
+        return recipes;
+      } catch (e) {
+        _logger.e("Error parsing JSON: $e");
+        throw Exception('Failed to parse recipe data');
+      }
+    } else {
+      _logger.w("Request failed with status: ${response.statusCode} and message: ${response.body}");
+      throw Exception('Failed to load recipes');
     }
   }
 }
