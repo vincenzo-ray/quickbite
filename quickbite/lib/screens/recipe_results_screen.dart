@@ -10,7 +10,6 @@ class RecipeResultsScreen extends StatelessWidget {
 
   Future<List<Recipe>> _fetchRecipes() async {
     final recipes = await ApiService.searchRecipesComplex(
-      // added filters to API
       query: filters['query'] ?? '',
       cuisine: filters['cuisine'],
       diet: filters['diet'],
@@ -19,6 +18,14 @@ class RecipeResultsScreen extends StatelessWidget {
       includeIngredients: filters['includeIngredients'],
       excludeIngredients: filters['excludeIngredients'],
       type: filters['type'],
+      minCalories: filters['minCalories'],
+      maxCalories: filters['maxCalories'],
+      minCarbs: filters['minCarbs'],
+      maxCarbs: filters['maxCarbs'],
+      minProtein: filters['minProtein'],
+      maxProtein: filters['maxProtein'],
+      minFat: filters['minFat'],
+      maxFat: filters['maxFat'],
     );
 
     for (final recipe in recipes) {
