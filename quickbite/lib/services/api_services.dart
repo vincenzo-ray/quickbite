@@ -196,7 +196,7 @@ class ApiService {
 
   // Search recipes using the complex search endpoint
   static Future<List<Recipe>> searchRecipesComplex({
-    required String query,
+    String? query,
     String? cuisine,
     String? diet,
     String? intolerances,
@@ -218,7 +218,7 @@ class ApiService {
 
     final queryParameters = {
       'apiKey': apiKey,
-      'query': query,
+      if (query != null && query.isNotEmpty) 'query': query,
       if (cuisine != null && cuisine.isNotEmpty) 'cuisine': cuisine,
       if (diet != null && diet.isNotEmpty) 'diet': diet,
       if (intolerances != null && intolerances.isNotEmpty) 'intolerances': intolerances,

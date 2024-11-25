@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_html/flutter_html.dart';
+import 'package:share_plus/share_plus.dart';
 import '../services/api_services.dart';
 
 /// RecipeDetailsScreen displays detailed information for a specific recipe, including:
@@ -13,6 +14,9 @@ class RecipeDetailsScreen extends StatelessWidget {
   final int recipeId;
   // Title of the recipe, displayed in the app bar
   final String title;
+
+  // custom URL scheme
+  static const String _baseShareUrl = 'quickbite://recipe';
 
   // Constructor with required parameters and the super.key parameter
   // to properly use keys with this widget.
@@ -29,11 +33,34 @@ class RecipeDetailsScreen extends StatelessWidget {
     return await ApiService.fetchRecipeDetails(recipeId);
   }
 
+  Future<void> _shareRecipe(BuildContext context) async {
+    final String shareableLink = '$_baseShareUrl/$recipeId';
+    
+    final String shareMessage = '''
+Check out this recipe: $title
+
+Open in QuickBite app: $shareableLink
+
+Don't have QuickBite? Search for "QuickBite" in your app store!''';
+    
+    
+    await Share.share(
+      shareMessage,
+      subject: title,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: Text(title), // Display the recipe title in the app bar
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.share),
+            onPressed: () => _shareRecipe(context),
+          ),
+        ],
       ),
       body: FutureBuilder<Map<String, dynamic>>(
         future: _fetchRecipeDetails(), // Calls the method to fetch recipe details

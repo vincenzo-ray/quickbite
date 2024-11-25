@@ -51,14 +51,14 @@ class HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.grey[100], // Light background for a modern look
+      backgroundColor: Colors.white,
       body: ListView(
         children: [
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 32),
             decoration: const BoxDecoration(
               gradient: LinearGradient(
-                colors: [Colors.deepOrangeAccent, Colors.orangeAccent],
+                colors: [Color(0xFF657D5D), Color(0xFF657D5D)],
                 begin: Alignment.topCenter,
                 end: Alignment.bottomCenter,
               ),
@@ -123,7 +123,7 @@ class HomeScreenState extends State<HomeScreen> {
                 ElevatedButton(
                   onPressed: _findMeals,
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.green,
+                    backgroundColor: const Color(0xFF657D5D),
                     padding: const EdgeInsets.symmetric(horizontal: 48, vertical: 16),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
@@ -138,7 +138,7 @@ class HomeScreenState extends State<HomeScreen> {
                 ElevatedButton(
                   onPressed: _openFilterScreen,
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.orange,
+                    backgroundColor: const Color(0xFFDE8E3F),
                     padding: const EdgeInsets.symmetric(horizontal: 48, vertical: 16),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),

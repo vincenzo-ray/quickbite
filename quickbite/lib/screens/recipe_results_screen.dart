@@ -10,7 +10,7 @@ class RecipeResultsScreen extends StatelessWidget {
 
   Future<List<Recipe>> _fetchRecipes() async {
     final recipes = await ApiService.searchRecipesComplex(
-      query: filters['query'] ?? '',
+      query: filters['query'],
       cuisine: filters['cuisine'],
       diet: filters['diet'],
       intolerances: filters['intolerances'],
@@ -39,10 +39,10 @@ class RecipeResultsScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.grey[100], // Light background for contrast
+      backgroundColor: Colors.white,
       appBar: AppBar(
         title: const Text("Recipe Results"),
-        backgroundColor: Colors.orangeAccent,
+        backgroundColor: const Color(0xFF657D5D),
       ),
       body: FutureBuilder<List<Recipe>>(
         future: _fetchRecipes(),
