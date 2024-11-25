@@ -53,5 +53,5 @@ To run QuickBite on your local machine:
 
 1. **Clone the Repository**:
    ```bash
-   git clone https://github.com/yourusername/quickbitev2.git
-   cd quickbitev2
+   git clone git@github.com:vincenzo-ray/quickbite.git
+   cd quickbite
