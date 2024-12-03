@@ -17,40 +17,81 @@ class FilterScreen extends StatefulWidget {
 class FilterScreenState extends State<FilterScreen> {
   late Map<String, dynamic> _filters;
   final _controllers = <String, TextEditingController>{};
+  final List<String> _includeIngredientsList = []; // Store ingredients dynamically
 
-  // initialize all filter boxes
   @override
   void initState() {
     super.initState();
+
+    // Ensure _filters is initialized properly
     _filters = Map<String, dynamic>.from(widget.initialFilters);
-    _controllers['equipment'] =
-        TextEditingController(text: _filters['equipment']);
-    _controllers['includeIngredients'] =
-        TextEditingController(text: _filters['includeIngredients']);
-    _controllers['excludeIngredients'] =
-        TextEditingController(text: _filters['excludeIngredients']);
-    _controllers['minCalories'] =
-        TextEditingController(text: _filters['minCalories']?.toString());
-    _controllers['maxCalories'] =
-        TextEditingController(text: _filters['maxCalories']?.toString());
-    _controllers['minCarbs'] =
-        TextEditingController(text: _filters['minCarbs']?.toString());
-    _controllers['maxCarbs'] =
-        TextEditingController(text: _filters['maxCarbs']?.toString());
-    _controllers['minProtein'] =
-        TextEditingController(text: _filters['minProtein']?.toString());
-    _controllers['maxProtein'] =
-        TextEditingController(text: _filters['maxProtein']?.toString());
-    _controllers['minFat'] =
-        TextEditingController(text: _filters['minFat']?.toString());
-    _controllers['maxFat'] =
-        TextEditingController(text: _filters['maxFat']?.toString());
+
+    // Ensure includeIngredients is initialized
+    _filters['includeIngredients'] = _filters['includeIngredients'] ?? '';
+
+    // Initialize controllers for text fields
+    _controllers['equipment'] = TextEditingController(text: _filters['equipment']);
+    _controllers['excludeIngredients'] = TextEditingController(text: _filters['excludeIngredients']);
+    _controllers['includeIngredients'] = TextEditingController(); // For dynamic ingredient entry
+    _controllers['minCalories'] = TextEditingController(text: _filters['minCalories']?.toString());
+    _controllers['maxCalories'] = TextEditingController(text: _filters['maxCalories']?.toString());
+    _controllers['minCarbs'] = TextEditingController(text: _filters['minCarbs']?.toString());
+    _controllers['maxCarbs'] = TextEditingController(text: _filters['maxCarbs']?.toString());
+    _controllers['minProtein'] = TextEditingController(text: _filters['minProtein']?.toString());
+    _controllers['maxProtein'] = TextEditingController(text: _filters['maxProtein']?.toString());
+    _controllers['minFat'] = TextEditingController(text: _filters['minFat']?.toString());
+    _controllers['maxFat'] = TextEditingController(text: _filters['maxFat']?.toString());
   }
 
-  // apply filters on button press
+  // Add an ingredient to the list and clear the input field
+  void _addIngredient(String ingredient) {
+    if (ingredient.trim().isNotEmpty) {
+      setState(() {
+        if (!_includeIngredientsList.contains(ingredient.trim())) {
+          _includeIngredientsList.add(ingredient.trim());
+          print('Added ingredient: $ingredient');
+          // Show SnackBar for feedback
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Added "$ingredient" to ingredients list.'),
+              duration: const Duration(seconds: 2),
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
+        } else {
+          // Show SnackBar if ingredient is already in the list
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('"$ingredient" is already in the list.'),
+              duration: const Duration(seconds: 2),
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
+        }
+      });
+      _controllers['includeIngredients']?.clear(); // Clear the input field
+    }
+  }
+
+  // Remove an ingredient from the list
+void _removeIngredient(String ingredient) {
+  setState(() {
+    _includeIngredientsList.remove(ingredient);
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('Removed "$ingredient" from the list.'),
+        duration: const Duration(seconds: 2),
+        behavior: SnackBarBehavior.floating,
+      ),
+    );
+  });
+}
+
+  // Apply filters on button press
   void _applyFilters() {
     _filters['equipment'] = _controllers['equipment']?.text;
-    _filters['includeIngredients'] = _controllers['includeIngredients']?.text;
+    _filters['includeIngredients'] =
+        _includeIngredientsList.join(','); // Join the list as a comma-separated string
     _filters['excludeIngredients'] = _controllers['excludeIngredients']?.text;
     _filters['minCalories'] =
         double.tryParse(_controllers['minCalories']?.text ?? '');
@@ -68,13 +109,14 @@ class FilterScreenState extends State<FilterScreen> {
     _filters['maxFat'] = double.tryParse(_controllers['maxFat']?.text ?? '');
 
     widget.onFiltersApplied(_filters);
-    Navigator.pop(context); // close
+    Navigator.pop(context);
   }
 
   // Clear all filters
   void _clearFilters() {
     setState(() {
       _filters.clear();
+      _includeIngredientsList.clear();
       _controllers.forEach((key, controller) => controller.clear());
     });
   }
@@ -87,7 +129,6 @@ class FilterScreenState extends State<FilterScreen> {
     super.dispose();
   }
 
-  // Box values
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -97,35 +138,34 @@ class FilterScreenState extends State<FilterScreen> {
       body: ListView(
         children: [
           _buildDropdown('Cuisine', 'cuisine', [
-                'African',
-                'Asian',
-                'American',
-                'British',
-                'Cajun',
-                'Caribbean',
-                'Chinese',
-                'Eastern European',
-                'European',
-                'French',
-                'German',
-                'Greek',
-                'Indian',
-                'Irish',
-                'Italian',
-                'Japanese',
-                'Jewish',
-                'Korean',
-                'Latin American',
-                'Mediterranean',
-                'Mexican',
-                'Middle Eastern',
-                'Nordic',
-                'Southern',
-                'Spanish',
-                'Thai',
-                'Vietnamese'
-              ]
-          ),
+            'African',
+            'Asian',
+            'American',
+            'British',
+            'Cajun',
+            'Caribbean',
+            'Chinese',
+            'Eastern European',
+            'European',
+            'French',
+            'German',
+            'Greek',
+            'Indian',
+            'Irish',
+            'Italian',
+            'Japanese',
+            'Jewish',
+            'Korean',
+            'Latin American',
+            'Mediterranean',
+            'Mexican',
+            'Middle Eastern',
+            'Nordic',
+            'Southern',
+            'Spanish',
+            'Thai',
+            'Vietnamese',
+          ]),
           _buildDropdown('Diet', 'diet', [
             'Gluten Free',
             'Ketogenic',
@@ -140,25 +180,30 @@ class FilterScreenState extends State<FilterScreen> {
             'Whole30',
           ]),
           _buildDropdown('Intolerances', 'intolerances', [
-                'Dairy',
-                'Egg',
-                'Gluten',
-                'Grain',
-                'Peanut',
-                'Seafood',
-                'Sesame',
-                'Shellfish',
-                'Soy',
-                'Sulfite',
-                'Tree Nut',
-                'Wheat'
-              ]
-          ),
+            'Dairy',
+            'Egg',
+            'Gluten',
+            'Grain',
+            'Peanut',
+            'Seafood',
+            'Sesame',
+            'Shellfish',
+            'Soy',
+            'Sulfite',
+            'Tree Nut',
+            'Wheat',
+          ]),
           _buildTextField('Equipment', 'equipment'),
-          _buildTextField('Include Ingredients', 'includeIngredients'),
-          _buildTextField('Exclude Ingredients', 'excludeIngredients'),
-          _buildDropdown(
-              'Type', 'type', [
+
+          // Use the Include Ingredients TextField with Add Button
+          _buildTextFieldWithAddButton(
+            'Ingredients you have',
+            'includeIngredients',
+          ),
+          const SizedBox(height: 16),
+
+          _buildTextField('Exclude these ingredients', 'excludeIngredients'),
+          _buildDropdown('Type', 'type', [
             'Main Course',
             'Side Dish',
             'Dessert',
@@ -172,11 +217,8 @@ class FilterScreenState extends State<FilterScreen> {
             'Marinade',
             'Fingerfood',
             'Snack',
-            'Drink'
-          ]
-
-          ),
-          // number field for numbers only
+            'Drink',
+          ]),
           _buildNumberField('Min Calories', 'minCalories'),
           _buildNumberField('Max Calories', 'maxCalories'),
           _buildNumberField('Min Carbs', 'minCarbs'),
@@ -186,8 +228,7 @@ class FilterScreenState extends State<FilterScreen> {
           _buildNumberField('Min Fat', 'minFat'),
           _buildNumberField('Max Fat', 'maxFat'),
           Padding(
-            padding: const EdgeInsets.symmetric(
-                horizontal: 16.0, vertical: 8.0),
+            padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
@@ -229,7 +270,55 @@ class FilterScreenState extends State<FilterScreen> {
     );
   }
 
-  // Text fields
+  Widget _buildTextFieldWithAddButton(String label, String key) {
+  return Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+        child: Row(
+          children: [
+            Expanded(
+              child: TextField(
+                decoration: InputDecoration(
+                  labelText: label,
+                  border: const OutlineInputBorder(),
+                ),
+                controller: _controllers[key], // Ensure controller is initialized
+              ),
+            ),
+            const SizedBox(width: 8),
+            IconButton(
+              icon: const Icon(Icons.add_circle, color: Colors.green),
+              onPressed: () {
+                final ingredient = _controllers[key]?.text.trim() ?? '';
+                if (ingredient.isNotEmpty) {
+                  print('Button pressed with ingredient: $ingredient');
+                  _addIngredient(ingredient);
+                }
+              },
+            ),
+          ],
+        ),
+      ),
+      // Display added ingredients as Chips
+      Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16.0),
+        child: Wrap(
+          spacing: 8,
+          runSpacing: 4,
+          children: _includeIngredientsList.map((ingredient) {
+            return Chip(
+              label: Text(ingredient),
+              onDeleted: () => _removeIngredient(ingredient),
+            );
+          }).toList(),
+        ),
+      ),
+    ],
+  );
+}
+
   Widget _buildTextField(String label, String key) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
@@ -246,7 +335,6 @@ class FilterScreenState extends State<FilterScreen> {
     );
   }
 
-  // Number fields
   Widget _buildNumberField(String label, String key) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
@@ -264,7 +352,6 @@ class FilterScreenState extends State<FilterScreen> {
     );
   }
 
-  // Drop downs
   Widget _buildDropdown(String label, String key, List<String> options) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
