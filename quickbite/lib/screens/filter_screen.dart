@@ -178,7 +178,7 @@ void _removeIngredient(String ingredient) {
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
-        title: const Text('Apply Filters'),
+        title: const Text('Apply Filters', style: TextStyle(color: Colors.white)),
         backgroundColor: const Color(0xFF657D5D),
       ),
       body: ListView(
