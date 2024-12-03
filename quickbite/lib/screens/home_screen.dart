@@ -3,6 +3,7 @@ import 'recipe_results_screen.dart';
 import 'filter_screen.dart';
 import '../widgets/search_bar.dart';
 import 'saved_filters_screen.dart';
+import 'package:logger/logger.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -12,6 +13,7 @@ class HomeScreen extends StatefulWidget {
 }
 
 class HomeScreenState extends State<HomeScreen> {
+  final Logger _logger = Logger();
   final Map<String, dynamic> filters = {};
   String query = "";
 
@@ -40,14 +42,34 @@ class HomeScreenState extends State<HomeScreen> {
   }
 
   void _findMeals() {
+  if (query.isNotEmpty) {
+    filters['type'] = 'query'; // Search by query
     filters['query'] = query;
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => RecipeResultsScreen(filters: filters),
-      ),
-      );
+  } else if (filters['includeIngredients'] != null && filters['includeIngredients'].isNotEmpty) {
+    filters['type'] = 'ingredients'; // Search by ingredients
+
+    // Convert the comma-separated string into a list of strings
+    filters['includeIngredients'] = filters['includeIngredients']
+        .split(',')
+        .map((ingredient) => ingredient.trim())
+        .toList();
+  } else {
+    // Log a warning if no valid input is provided
+    _logger.e("No valid input provided. Either query or includeIngredients is required.");
+    return;
   }
+
+  // Log the filters being passed
+  _logger.d("Filters applied: $filters");
+
+  // Navigate to RecipeResultsScreen
+  Navigator.push(
+    context,
+    MaterialPageRoute(
+      builder: (context) => RecipeResultsScreen(filters: filters),
+    ),
+  );
+}
 
   void _openSavedFilters() {
     Navigator.push(
