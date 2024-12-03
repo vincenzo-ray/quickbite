@@ -2,7 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
 import '../widgets/saved_filter.dart';
-import 'filter_screen.dart';
+import 'recipe_results_screen.dart';
+import 'package:logger/logger.dart';
 
 class SavedFiltersScreen extends StatefulWidget {
   final Function(Map<String, dynamic>) onFilterSelected;
@@ -18,7 +19,9 @@ class SavedFiltersScreen extends StatefulWidget {
 
 
 class _SavedFiltersScreenState extends State<SavedFiltersScreen> {
+  final Logger _logger = Logger();
   List<SavedFilter> _savedFilters = [];
+  String query = "";
 
   @override
   void initState() {
@@ -52,7 +55,7 @@ class _SavedFiltersScreenState extends State<SavedFiltersScreen> {
   void _applyFilter(SavedFilter filter) {
     final Map<String, dynamic> appliedFilters = Map<String, dynamic>.from(filter.filters);
     
-    print('Original filters: ${filter.filters}');
+    _logger.d('Original filters: ${filter.filters}');
     
     if (filter.filters['includeIngredients'] != null) {
       if (filter.filters['includeIngredients'] is String) {
@@ -71,20 +74,28 @@ class _SavedFiltersScreenState extends State<SavedFiltersScreen> {
     } else {
       appliedFilters['includeIngredients'] = <String>[];
     }
+
+    if (appliedFilters['includeIngredients'].isNotEmpty) {
+      appliedFilters['type'] = 'ingredients';
+    } else {
+      appliedFilters['type'] = 'query';
+      if (!appliedFilters.containsKey('query')) {
+        appliedFilters['query'] = '';
+      }
+    }
+
+    if (!appliedFilters.containsKey('cuisine')) appliedFilters['cuisine'] = null;
+    if (!appliedFilters.containsKey('diet')) appliedFilters['diet'] = null;
+    if (!appliedFilters.containsKey('intolerances')) appliedFilters['intolerances'] = null;
     
-    print('Applied filters after processing: $appliedFilters');
+    _logger.d('Applied filters after processing: $appliedFilters');
 
     widget.onFilterSelected(appliedFilters);
-    
-    Navigator.pop(context);
     
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) => FilterScreen(
-          onFiltersApplied: widget.onFilterSelected,
-          initialFilters: appliedFilters,
-        ),
+        builder: (context) => RecipeResultsScreen(filters: appliedFilters),
       ),
     );
   }

@@ -24,12 +24,51 @@ class FilterScreenState extends State<FilterScreen> {
   final _controllers = <String, TextEditingController>{};
   final List<String> _includeIngredientsList = []; // Store ingredients dynamically
 
+  // Define the options lists with consistent casing
+  final List<String> cuisineOptions = [
+    'African', 'Asian', 'American', 'British', 'Cajun', 'Caribbean',
+    'Chinese', 'European', 'French', 'German', 'Greek', 'Indian',
+    'Irish', 'Italian', 'Japanese', 'Jewish', 'Korean', 'Latin American',
+    'Mediterranean', 'Mexican', 'Middle Eastern', 'Nordic', 'Southern',
+    'Spanish', 'Thai', 'Vietnamese'
+  ];
+
+  final List<String> dietOptions = [
+    'Gluten Free', 'Ketogenic', 'Vegetarian', 'Lacto-Vegetarian',
+    'Ovo-Vegetarian', 'Vegan', 'Pescetarian', 'Paleo', 'Primal', 'Low FODMAP',
+    'Whole30'
+  ];
+
+  final List<String> intoleranceOptions = [
+    'Dairy', 'Egg', 'Gluten', 'Grain', 'Peanut', 'Seafood',
+    'Sesame', 'Shellfish', 'Soy', 'Sulfite', 'Tree Nut', 'Wheat'
+  ];
+
   @override
   void initState() {
     super.initState();
 
-    // Ensure _filters is initialized properly
+    // Initialize _filters with null values for dropdowns if not already set
     _filters = Map<String, dynamic>.from(widget.initialFilters);
+    
+    // Convert existing values to Title Case
+    if (_filters.containsKey('cuisine') && _filters['cuisine'] != null) {
+      _filters['cuisine'] = toTitleCase(_filters['cuisine']);
+    }
+    
+    if (_filters.containsKey('diet') && _filters['diet'] != null) {
+      _filters['diet'] = toTitleCase(_filters['diet']);
+    }
+    
+    if (_filters.containsKey('intolerances') && _filters['intolerances'] != null) {
+      _filters['intolerances'] = toTitleCase(_filters['intolerances']);
+    }
+    
+    if (_filters.containsKey('type')) {
+      _filters['type'] = _filters['type']?.toLowerCase();
+    } else {
+      _filters['type'] = null;
+    }
 
     // Ensure includeIngredients is initialized
     _filters['includeIngredients'] = _filters['includeIngredients'] ?? '';
@@ -140,65 +179,13 @@ void _removeIngredient(String ingredient) {
       backgroundColor: Colors.white,
       appBar: AppBar(
         title: const Text('Apply Filters'),
+        backgroundColor: const Color(0xFF657D5D),
       ),
       body: ListView(
         children: [
-          _buildDropdown('Cuisine', 'cuisine', [
-            'African',
-            'Asian',
-            'American',
-            'British',
-            'Cajun',
-            'Caribbean',
-            'Chinese',
-            'Eastern European',
-            'European',
-            'French',
-            'German',
-            'Greek',
-            'Indian',
-            'Irish',
-            'Italian',
-            'Japanese',
-            'Jewish',
-            'Korean',
-            'Latin American',
-            'Mediterranean',
-            'Mexican',
-            'Middle Eastern',
-            'Nordic',
-            'Southern',
-            'Spanish',
-            'Thai',
-            'Vietnamese',
-          ]),
-          _buildDropdown('Diet', 'diet', [
-            'Gluten Free',
-            'Ketogenic',
-            'Vegetarian',
-            'Lacto-Vegetarian',
-            'Ovo-Vegetarian',
-            'Vegan',
-            'Pescetarian',
-            'Paleo',
-            'Primal',
-            'Low FODMAP',
-            'Whole30',
-          ]),
-          _buildDropdown('Intolerances', 'intolerances', [
-            'Dairy',
-            'Egg',
-            'Gluten',
-            'Grain',
-            'Peanut',
-            'Seafood',
-            'Sesame',
-            'Shellfish',
-            'Soy',
-            'Sulfite',
-            'Tree Nut',
-            'Wheat',
-          ]),
+          _buildDropdown('Cuisine', 'cuisine', cuisineOptions),
+          _buildDropdown('Diet', 'diet', dietOptions),
+          _buildDropdown('Intolerances', 'intolerances', intoleranceOptions),
           _buildTextField('Equipment', 'equipment'),
 
           // Use the Include Ingredients TextField with Add Button
@@ -274,7 +261,7 @@ void _removeIngredient(String ingredient) {
             child: ElevatedButton(
               onPressed: _showSaveFilterDialog,
               style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF657D5D),
+                backgroundColor: const Color(0xFF7D5D65),
                 padding: const EdgeInsets.symmetric(horizontal: 48, vertical: 16),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12),
@@ -405,6 +392,17 @@ void _removeIngredient(String ingredient) {
   }
 
   Widget _buildDropdown(String label, String key, List<String> options) {
+    
+    String? currentValue = _filters[key];
+    if (currentValue != null) {
+      currentValue = toTitleCase(currentValue);
+      
+      if (!options.contains(currentValue)) {
+        currentValue = null;
+        _filters[key] = null;
+      }
+    }
+
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
       child: DropdownButtonFormField<String>(
@@ -412,13 +410,19 @@ void _removeIngredient(String ingredient) {
           labelText: label,
           border: const OutlineInputBorder(),
         ),
-        value: _filters[key],
-        items: options.map((option) {
-          return DropdownMenuItem<String>(
-            value: option,
-            child: Text(option),
-          );
-        }).toList(),
+        value: currentValue,
+        items: [
+          const DropdownMenuItem<String>(
+            value: null,
+            child: Text('None'),
+          ),
+          ...options.map((option) {
+            return DropdownMenuItem<String>(
+              value: option,
+              child: Text(option),
+            );
+          }).toList(),
+        ],
         onChanged: (value) {
           setState(() {
             _filters[key] = value;
@@ -426,6 +430,15 @@ void _removeIngredient(String ingredient) {
         },
       ),
     );
+  }
+
+  // Helper method to convert string to Title Case
+  String toTitleCase(String text) {
+    if (text.isEmpty) return text;
+    return text.split(' ').map((word) {
+      if (word.isEmpty) return word;
+      return word[0].toUpperCase() + word.substring(1).toLowerCase();
+    }).join(' ');
   }
 
   Future<void> _scanBarcode(String key) async {

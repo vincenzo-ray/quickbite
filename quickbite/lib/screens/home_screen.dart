@@ -52,16 +52,17 @@ class HomeScreenState extends State<HomeScreen> {
       filters['query'] = query;
     } 
     // If there are ingredients, use them as the search method
-    else if (filters['includeIngredients'] != null && filters['includeIngredients'].isNotEmpty) {
+    else if (filters['includeIngredients'] != null && filters['includeIngredients'].toString().isNotEmpty) {
       filters['type'] = 'ingredients';
       
-      // Convert the comma-separated string into a list of strings if needed
       if (filters['includeIngredients'] is String) {
-        filters['includeIngredients'] = filters['includeIngredients']
+        final ingredients = filters['includeIngredients']
+            .toString()
             .split(',')
             .map((ingredient) => ingredient.trim())
             .where((ingredient) => ingredient.isNotEmpty)
             .toList();
+        filters['includeIngredients'] = ingredients;
       }
     }
     // If neither query nor ingredients are provided, just use the filters
