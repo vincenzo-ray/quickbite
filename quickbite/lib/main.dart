@@ -27,6 +27,8 @@ final router = GoRouter(
         return RecipeDetailsScreen(
           recipeId: recipeId,
           title: 'Recipe Details', // TODO: get title from backend?
+          usedIngredients: const [], // Default to an empty list
+          missedIngredients: const [], // Default to an empty list
         );
       },
     ),

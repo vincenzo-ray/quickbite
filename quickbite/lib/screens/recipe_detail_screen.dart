@@ -3,26 +3,26 @@ import 'package:flutter_html/flutter_html.dart';
 import 'package:share_plus/share_plus.dart';
 import '../services/api_services.dart';
 
-/// Displays detailed information for a recipe, including:
-/// - Image, title, nutrition, ingredients, and instructions
 class RecipeDetailsScreen extends StatelessWidget {
   final int recipeId;
   final String title;
+  final List<String> usedIngredients;
+  final List<String> missedIngredients;
 
   const RecipeDetailsScreen({
     super.key,
     required this.recipeId,
     required this.title,
+    required this.usedIngredients,
+    required this.missedIngredients,
   });
-
-  static const String _baseShareUrl = 'quickbite://recipe';
 
   Future<Map<String, dynamic>> _fetchRecipeDetails() async {
     return await ApiService.fetchRecipeDetails(recipeId);
   }
 
   Future<void> _shareRecipe(BuildContext context) async {
-    final String shareableLink = '$_baseShareUrl/$recipeId';
+    final String shareableLink = 'quickbite://recipe/$recipeId';
     final String shareMessage = '''
 Check out this recipe: $title
 
@@ -62,8 +62,6 @@ Don't have QuickBite? Search for "QuickBite" in your app store!''';
           final recipeDetails = snapshot.data!;
           final nutrition = recipeDetails['nutrition']?['nutrients'] ?? [];
           final instructions = recipeDetails['instructions'] ?? 'No instructions available';
-          final usedIngredients = recipeDetails['usedIngredients'] ?? [];
-          final missedIngredients = recipeDetails['missedIngredients'] ?? [];
 
           return SingleChildScrollView(
             padding: const EdgeInsets.all(16.0),
@@ -117,26 +115,30 @@ Don't have QuickBite? Search for "QuickBite" in your app store!''';
                   style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                 ),
                 const SizedBox(height: 8),
-                Text(
-                  "Used Ingredients (${usedIngredients.length}):",
-                  style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                ),
-                for (var ingredient in usedIngredients)
+                if (usedIngredients.isNotEmpty) ...[
                   Text(
-                    "- ${ingredient['original'] ?? ingredient['name']}",
-                    style: const TextStyle(fontSize: 16),
+                    "Used Ingredients (${usedIngredients.length}):",
+                    style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                   ),
-                const SizedBox(height: 8),
-                Text(
-                  "Missing Ingredients (${missedIngredients.length}):",
-                  style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                ),
-                for (var ingredient in missedIngredients)
+                  for (var ingredient in usedIngredients)
+                    Text(
+                      "- $ingredient",
+                      style: const TextStyle(fontSize: 16),
+                    ),
+                  const SizedBox(height: 8),
+                ],
+                if (missedIngredients.isNotEmpty) ...[
                   Text(
-                    "- ${ingredient['original'] ?? ingredient['name']}",
-                    style: const TextStyle(fontSize: 16, color: Colors.red),
+                    "Missing Ingredients (${missedIngredients.length}):",
+                    style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                   ),
-                const SizedBox(height: 16),
+                  for (var ingredient in missedIngredients)
+                    Text(
+                      "- $ingredient",
+                      style: const TextStyle(fontSize: 16, color: Colors.red),
+                    ),
+                  const SizedBox(height: 16),
+                ],
 
                 // Instructions Section
                 const Text(

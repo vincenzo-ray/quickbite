@@ -13,50 +13,58 @@ class RecipeListScreen extends StatelessWidget {
 
 // Inside RecipeListScreen class
 @override
-Widget build(BuildContext context) {
-  // Log the number of recipes for debugging purposes (remove or configure logging level in production)
-  developer.log("Number of recipes to display: ${recipes.length}", name: 'RecipeListScreen');
+  Widget build(BuildContext context) {
+    // Log the number of recipes for debugging purposes
+    developer.log("Number of recipes to display: ${recipes.length}", name: 'RecipeListScreen');
 
-  return Scaffold(
-    appBar: AppBar(
-      title: const Text('Recipe List'), // App bar title for the screen
-    ),
-    // Check if there are recipes to display; if not, show a message
-    body: recipes.isNotEmpty 
-      ? ListView.builder(
-          itemCount: recipes.length,
-          itemBuilder: (context, index) {
-            final recipe = recipes[index]; // Get the recipe at the current index
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Recipe List'), // App bar title for the screen
+      ),
+      // Check if there are recipes to display; if not, show a message
+      body: recipes.isNotEmpty
+          ? ListView.builder(
+              itemCount: recipes.length,
+              itemBuilder: (context, index) {
+                final recipe = recipes[index]; // Get the recipe at the current index
 
-            return ListTile(
-              // Display recipe image or show an icon if the image fails to load
-              leading: Image.network(
-                recipe.imageUrl,
-                width: 50,
-                height: 50,
-                fit: BoxFit.cover,
-                errorBuilder: (context, error, stackTrace) => const Icon(Icons.image),
-              ),
-              // Display recipe title and ingredient count
-              title: Text(recipe.title),
-              subtitle: Text('${recipe.usedIngredientCount} ingredients used'),
-
-              // Navigate to RecipeDetailsScreen when a recipe is tapped
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => RecipeDetailsScreen(
-                      recipeId: recipe.id,
-                      title: recipe.title,
-                    ),
+                return ListTile(
+                  // Display recipe image or show an icon if the image fails to load
+                  leading: Image.network(
+                    recipe.imageUrl,
+                    width: 50,
+                    height: 50,
+                    fit: BoxFit.cover,
+                    errorBuilder: (context, error, stackTrace) =>
+                        const Icon(Icons.image),
                   ),
+                  // Display recipe title and ingredient count
+                  title: Text(recipe.title),
+                  subtitle: Text(
+                    'Used: ${recipe.usedIngredientCount}, Missing: ${recipe.missedIngredientCount}',
+                    style: const TextStyle(fontSize: 14, color: Colors.grey),
+                  ),
+
+                  // Navigate to RecipeDetailsScreen when a recipe is tapped
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => RecipeDetailsScreen(
+                          recipeId: recipe.id,
+                          title: recipe.title,
+                          usedIngredients: recipe.usedIngredients, // Pass used ingredients
+                          missedIngredients: recipe.missedIngredients, // Pass missed ingredients
+                        ),
+                      ),
+                    );
+                  },
                 );
               },
-            );
-          },
-        )
-      : const Center(child: Text('No Recipes found')), // Show this message if no recipes are available
-  );
- }
+            )
+          : const Center(
+              child: Text('No Recipes found'),
+            ), // no recipes are available
+    );
+  }
 }

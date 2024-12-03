@@ -7,7 +7,7 @@ import 'package:logger/logger.dart';
 class RecipeResultsScreen extends StatelessWidget {
   final Map<String, dynamic> filters;
 
-  static final Logger _logger = Logger( // Initialize logger
+  static final Logger _logger = Logger(
     printer: PrettyPrinter(),
     level: Level.debug,
   );
@@ -15,67 +15,71 @@ class RecipeResultsScreen extends StatelessWidget {
   const RecipeResultsScreen({super.key, required this.filters});
 
   Future<List<Recipe>> _fetchRecipes() async {
-  _logger.d("Filters: $filters");
+    _logger.d("Filters: $filters");
 
-  // Validate filters
-  if (filters['type'] == null) {
-    _logger.w("Filter type is null. Please provide a valid filter type.");
-    return [];
-  }
-
-  if (filters['type'] == 'ingredients' && (filters['includeIngredients'] == null || filters['includeIngredients'].isEmpty)) {
-    _logger.w("No ingredients provided for ingredient-based search.");
-    return [];
-  }
-
-  if (filters['type'] == 'query' && (filters['query'] == null || filters['query'].isEmpty)) {
-    _logger.w("No query provided for query-based search.");
-    return [];
-  }
-
-  List<Recipe> recipes = [];
-  try {
-    if (filters['type'] == 'ingredients') {
-      _logger.i("Fetching recipes by ingredients: ${filters['includeIngredients']}");
-      recipes = await ApiService.searchRecipesByIngredients(
-        ingredients: filters['includeIngredients'],
-      );
-    } else if (filters['type'] == 'query') {
-      _logger.i("Fetching recipes by query: ${filters['query']}");
-      recipes = await ApiService.searchRecipesComplex(
-        query: filters['query'],
-        cuisine: filters['cuisine'],
-        diet: filters['diet'],
-        intolerances: filters['intolerances'],
-        equipment: filters['equipment'],
-        includeIngredients: filters['includeIngredients'],
-        excludeIngredients: filters['excludeIngredients'],
-        type: filters['type'],
-        minCalories: filters['minCalories'],
-        maxCalories: filters['maxCalories'],
-        minCarbs: filters['minCarbs'],
-        maxCarbs: filters['maxCarbs'],
-        minProtein: filters['minProtein'],
-        maxProtein: filters['maxProtein'],
-        minFat: filters['minFat'],
-        maxFat: filters['maxFat'],
-      );
+    // Validate filters
+    if (filters['type'] == null) {
+      _logger.w("Filter type is null. Please provide a valid filter type.");
+      return [];
     }
 
-    // Fetch and set nutrition data for each recipe
-    for (final recipe in recipes) {
-      _logger.d("Fetching nutrition data for recipe ID: ${recipe.id}");
-      final nutritionData = await ApiService.fetchNutritionData(recipe.id);
-      recipe.setNutritionData(nutritionData);
+    if (filters['type'] == 'ingredients' &&
+        (filters['includeIngredients'] == null ||
+            filters['includeIngredients'].isEmpty)) {
+      _logger.w("No ingredients provided for ingredient-based search.");
+      return [];
     }
 
-    _logger.i("Successfully fetched ${recipes.length} recipes.");
-  } catch (e, stackTrace) {
-    _logger.e("Error fetching recipes", e, stackTrace);
-  }
+    if (filters['type'] == 'query' &&
+        (filters['query'] == null || filters['query'].isEmpty)) {
+      _logger.w("No query provided for query-based search.");
+      return [];
+    }
 
-  return recipes;
-}
+    List<Recipe> recipes = [];
+    try {
+      if (filters['type'] == 'ingredients') {
+        _logger.i(
+            "Fetching recipes by ingredients: ${filters['includeIngredients']}");
+        recipes = await ApiService.searchRecipesByIngredients(
+          ingredients: filters['includeIngredients'],
+        );
+      } else if (filters['type'] == 'query') {
+        _logger.i("Fetching recipes by query: ${filters['query']}");
+        recipes = await ApiService.searchRecipesComplex(
+          query: filters['query'],
+          cuisine: filters['cuisine'],
+          diet: filters['diet'],
+          intolerances: filters['intolerances'],
+          equipment: filters['equipment'],
+          includeIngredients: filters['includeIngredients'],
+          excludeIngredients: filters['excludeIngredients'],
+          type: filters['type'],
+          minCalories: filters['minCalories'],
+          maxCalories: filters['maxCalories'],
+          minCarbs: filters['minCarbs'],
+          maxCarbs: filters['maxCarbs'],
+          minProtein: filters['minProtein'],
+          maxProtein: filters['maxProtein'],
+          minFat: filters['minFat'],
+          maxFat: filters['maxFat'],
+        );
+      }
+
+      // Fetch and set nutrition data for each recipe
+      for (final recipe in recipes) {
+        _logger.d("Fetching nutrition data for recipe ID: ${recipe.id}");
+        final nutritionData = await ApiService.fetchNutritionData(recipe.id);
+        recipe.setNutritionData(nutritionData);
+      }
+
+      _logger.i("Successfully fetched ${recipes.length} recipes.");
+    } catch (e, stackTrace) {
+      _logger.e("Error fetching recipes", e, stackTrace);
+    }
+
+    return recipes;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -83,7 +87,9 @@ class RecipeResultsScreen extends StatelessWidget {
       backgroundColor: Colors.white,
       appBar: AppBar(
         title: Text(
-          filters['type'] == 'ingredients' ? "Recipes by Ingredients" : "Recipe Results",
+          filters['type'] == 'ingredients'
+              ? "Recipes by Ingredients"
+              : "Recipe Results",
         ),
         backgroundColor: const Color(0xFF657D5D),
       ),
@@ -176,8 +182,14 @@ class RecipeResultsScreen extends StatelessWidget {
                             if (filters['type'] == 'ingredients') ...[
                               const SizedBox(height: 8),
                               Text(
-                                "Used Ingredients: ${recipe.usedIngredientCount}, "
-                                "Missing Ingredients: ${recipe.missedIngredientCount}",
+                                "Used Ingredients: ${recipe.usedIngredients.length}",
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  color: Colors.grey[600],
+                                ),
+                              ),
+                              Text(
+                                "Missing Ingredients: ${recipe.missedIngredients.length}",
                                 style: TextStyle(
                                   fontSize: 13,
                                   color: Colors.grey[600],
@@ -197,6 +209,8 @@ class RecipeResultsScreen extends StatelessWidget {
                               builder: (context) => RecipeDetailsScreen(
                                 recipeId: recipe.id,
                                 title: recipe.title,
+                                usedIngredients: recipe.usedIngredients,
+                                missedIngredients: recipe.missedIngredients,
                               ),
                             ),
                           );

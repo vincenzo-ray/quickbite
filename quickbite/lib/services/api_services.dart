@@ -283,7 +283,7 @@ static Future<List<Recipe>> searchRecipesByIngredients({
       if (maxProtein != null) 'maxProtein': maxProtein.toString(),
       if (minFat != null) 'minFat': minFat.toString(),
       if (maxFat != null) 'maxFat': maxFat.toString(),
-      'number': '10',
+      'number': '5',
     };
 
     final uri = Uri.https('api.spoonacular.com', '/recipes/complexSearch', queryParameters);
