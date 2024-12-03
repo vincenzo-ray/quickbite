@@ -257,4 +257,24 @@ class ApiService {
       throw Exception('Failed to load recipes');
     }
   }
+
+  // Method to fetch product name by UPC
+  static Future<String?> fetchProductNameByUPC(String upc) async {
+    final apiKey = await _loadApiKey(); // Load the API key
+    final url = Uri.parse('https://api.spoonacular.com/food/products/upc/$upc?apiKey=$apiKey');
+
+    try {
+      final response = await http.get(url);
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        return data['title'] as String?;
+      } else {
+        _logger.w('Failed to fetch product: ${response.statusCode}');
+        return null;
+      }
+    } catch (e) {
+      _logger.e('Error fetching product: $e');
+      return null;
+    }
+  }
 }

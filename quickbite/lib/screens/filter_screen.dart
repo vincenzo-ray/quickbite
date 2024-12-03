@@ -1,4 +1,9 @@
 import 'package:flutter/material.dart';
+import '../widgets/saved_filter.dart';
+import 'barcode_scanner_screen.dart';
+import '../services/api_services.dart';
+import 'dart:convert';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class FilterScreen extends StatefulWidget {
   final Function(Map<String, dynamic>) onFiltersApplied;
@@ -132,6 +137,7 @@ void _removeIngredient(String ingredient) {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.white,
       appBar: AppBar(
         title: const Text('Apply Filters'),
       ),
@@ -235,9 +241,8 @@ void _removeIngredient(String ingredient) {
                 ElevatedButton(
                   onPressed: _applyFilters,
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.orangeAccent,
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 48, vertical: 16),
+                    backgroundColor: const Color(0xFF657D5D),
+                    padding: const EdgeInsets.symmetric(horizontal: 48, vertical: 16),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
                     ),
@@ -250,9 +255,8 @@ void _removeIngredient(String ingredient) {
                 ElevatedButton(
                   onPressed: _clearFilters,
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.red,
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 48, vertical: 16),
+                    backgroundColor: const Color(0xFFDE8E3F),
+                    padding: const EdgeInsets.symmetric(horizontal: 48, vertical: 16),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
                     ),
@@ -263,6 +267,23 @@ void _removeIngredient(String ingredient) {
                   ),
                 ),
               ],
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+            child: ElevatedButton(
+              onPressed: _showSaveFilterDialog,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF657D5D),
+                padding: const EdgeInsets.symmetric(horizontal: 48, vertical: 16),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+              child: const Text(
+                'Save Filter',
+                style: TextStyle(color: Colors.white),
+              ),
             ),
           ),
         ],
@@ -284,10 +305,14 @@ void _removeIngredient(String ingredient) {
                   labelText: label,
                   border: const OutlineInputBorder(),
                 ),
-                controller: _controllers[key], // Ensure controller is initialized
+                controller: _controllers[key],
               ),
             ),
             const SizedBox(width: 8),
+            IconButton(
+              icon: const Icon(Icons.qr_code_scanner, color: Colors.blue),
+              onPressed: () => _scanBarcode(key),
+            ),
             IconButton(
               icon: const Icon(Icons.add_circle, color: Colors.green),
               onPressed: () {
@@ -320,6 +345,33 @@ void _removeIngredient(String ingredient) {
 }
 
   Widget _buildTextField(String label, String key) {
+    if (key == 'excludeIngredients') {
+      return Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+        child: Row(
+          children: [
+            Expanded(
+              child: TextField(
+                decoration: InputDecoration(
+                  labelText: label,
+                  border: const OutlineInputBorder(),
+                ),
+                controller: _controllers[key],
+                onChanged: (value) {
+                  _filters[key] = value;
+                },
+              ),
+            ),
+            const SizedBox(width: 8),
+            IconButton(
+              icon: const Icon(Icons.qr_code_scanner, color: Colors.blue),
+              onPressed: () => _scanBarcode(key),
+            ),
+          ],
+        ),
+      );
+    }
+    
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
       child: TextField(
@@ -374,5 +426,97 @@ void _removeIngredient(String ingredient) {
         },
       ),
     );
+  }
+
+  Future<void> _scanBarcode(String key) async {
+    final result = await Navigator.push<String>(
+      context,
+      MaterialPageRoute(
+        builder: (context) => const BarcodeScannerScreen(),
+      ),
+    );
+
+    if (result != null) {
+      final productName = await ApiService.fetchProductNameByUPC(result);
+      if (productName != null) {
+        setState(() {
+          if (key == 'includeIngredients') {
+            _addIngredient(productName);
+          } else {
+            _controllers[key]?.text = productName;
+            _filters[key] = productName;
+          }
+        });
+      } else {
+        // Handle the case where the product name could not be fetched
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Product not found')),
+        );
+      }
+    }
+  }
+
+  Future<void> _showSaveFilterDialog() async {
+    final nameController = TextEditingController();
+    
+    return showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('Save Filter'),
+          content: TextField(
+            controller: nameController,
+            decoration: const InputDecoration(
+              labelText: 'Filter Name',
+              hintText: 'Enter a name for this filter',
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Cancel'),
+            ),
+            TextButton(
+              onPressed: () async {
+                if (nameController.text.isNotEmpty) {
+                  await _saveFilter(nameController.text);
+                  Navigator.pop(context);
+                  if (mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text('Filter "${nameController.text}" saved'),
+                      ),
+                    );
+                  }
+                }
+              },
+              child: const Text('Save'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Future<void> _saveFilter(String name) async {
+    final prefs = await SharedPreferences.getInstance();
+    
+    final String? savedFiltersJson = prefs.getString('saved_filters');
+    final List<Map<String, dynamic>> savedFilters = savedFiltersJson != null 
+      ? List<Map<String, dynamic>>.from(jsonDecode(savedFiltersJson))
+      : [];
+    
+    final Map<String, dynamic> filtersToSave = Map<String, dynamic>.from(_filters);
+    
+    filtersToSave['includeIngredients'] = _includeIngredientsList.toList();
+    
+    final newFilter = SavedFilter(
+      name: name,
+      filters: filtersToSave,
+    );
+    
+    savedFilters.add(newFilter.toJson());
+    
+    await prefs.setString('saved_filters', jsonEncode(savedFilters));
   }
 }

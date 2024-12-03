@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'recipe_results_screen.dart';
 import 'filter_screen.dart';
 import '../widgets/search_bar.dart';
+import 'saved_filters_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -46,6 +47,23 @@ class HomeScreenState extends State<HomeScreen> {
         builder: (context) => RecipeResultsScreen(filters: filters),
       ),
       );
+  }
+
+  void _openSavedFilters() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => SavedFiltersScreen(
+          onFilterSelected: (selectedFilters) {
+            setState(() {
+              filters.clear();
+              filters.addAll(selectedFilters);
+              print('Applied filters: $filters');
+            });
+          },
+        ),
+      ),
+    );
   }
 
   @override
@@ -135,19 +153,43 @@ class HomeScreenState extends State<HomeScreen> {
                   ),
                 ),
                 const SizedBox(height: 10),
-                ElevatedButton(
-                  onPressed: _openFilterScreen,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFFDE8E3F),
-                    padding: const EdgeInsets.symmetric(horizontal: 48, vertical: 16),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  children: [
+                    Expanded(
+                      child: ElevatedButton(
+                        onPressed: _openFilterScreen,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFFDE8E3F),
+                          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                        child: const Text(
+                          "Filters",
+                          style: TextStyle(fontSize: 18, color: Colors.white),
+                        ),
+                      ),
                     ),
-                  ),
-                  child: const Text(
-                    "Filters",
-                    style: TextStyle(fontSize: 18, color: Colors.white),
-                  ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: ElevatedButton(
+                        onPressed: _openSavedFilters,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFFDE8E3F),
+                          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                        child: const Text(
+                          "Saved Filters",
+                          style: TextStyle(fontSize: 18, color: Colors.white),
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ],
             ),
