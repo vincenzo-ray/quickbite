@@ -6,8 +6,9 @@ import '../recipe/recipe.dart';
 
 class ApiService {
   static const String _baseUrl = 'https://api.spoonacular.com/recipes';
-  static final Logger _logger = Logger(); // Initialize the logger
-
+  static final Logger _logger = Logger( // Initialize the logger
+    level: Level.debug, // Ensures debug-level logs are output.
+);
   // Method to load the API key from api_key.txt file using rootBundle
   static Future<String> _loadApiKey() async {
     try {
@@ -19,58 +20,106 @@ class ApiService {
     }
   }
 
-  // Method to search for recipes by ingredients with optional diet filter
-  static Future<List<Recipe>> searchRecipesByIngredients(
-      List<String> ingredients, {
-        String? diet,
-      }) async {
-    final apiKey = await _loadApiKey();
-    final ingredientsString = ingredients.join(',');
+  // Method to search for recipes by ingredients with optional filters
+static Future<List<Recipe>> searchRecipesByIngredients({
+  required List<dynamic> ingredients, // Accept a dynamic list
+  int number = 5,
+  int ranking = 1, // Maximize used ingredients by default
+  bool ignorePantry = true,
+}) async {
+  final apiKey = await _loadApiKey();
 
-    // Construct URL with optional diet filter
-    final queryParameters = {
-      'apiKey': apiKey,
-      'ingredients': ingredientsString,
-      'number': '10',
-      'ranking': '1',
-      'ignorePantry': 'true',
-      if (diet != null) 'diet': diet.toLowerCase().replaceAll(' ', ''), // API expects lowercase and no spaces
-    };
-
-    final uri = Uri.https('api.spoonacular.com', '/recipes/findByIngredients', queryParameters);
-    _logger.i("Requesting URL: $uri"); // Log the constructed URL
-
-    final response = await http.get(uri);
-
-    if (response.statusCode == 200) {
-      try {
-        final List<dynamic> data = jsonDecode(response.body);
-        final recipes = data.map((recipe) => Recipe.fromJson(recipe)).toList();
-        _logger.i("Recipes found: ${recipes.length}"); // Log the count of recipes found
-        return recipes;
-      } catch (e) {
-        _logger.e("Error parsing JSON: $e"); // Log JSON parsing error
-        throw Exception('Failed to parse recipe data');
-      }
+  // Ensure all elements in ingredients are Strings
+  final List<String> sanitizedIngredients = ingredients.map((ingredient) {
+    if (ingredient is String) {
+      return ingredient;
     } else {
-      _logger.w("Request failed with status: ${response.statusCode} and message: ${response.body}"); // Log response body for additional info
-      throw Exception('Failed to load recipes');
+      throw Exception("Ingredient must be a string. Found: $ingredient");
     }
+  }).toList();
+
+  // Log the sanitized ingredients
+  _logger.d("Sanitized ingredients: $sanitizedIngredients");
+
+  if (sanitizedIngredients.isEmpty) {
+    _logger.e("No ingredients provided for the search");
+    throw Exception('Ingredients list cannot be empty');
   }
 
+  final ingredientsString = sanitizedIngredients.join(',');
+
+  // Log the ingredients being searched
+  _logger.d("Searching recipes with ingredients: $ingredientsString");
+
+  final queryParameters = {
+    'apiKey': apiKey,
+    'ingredients': ingredientsString,
+    'number': number.toString(),
+    'ranking': ranking.toString(),
+    'ignorePantry': ignorePantry.toString(),
+  };
+
+  final uri = Uri.https('api.spoonacular.com', '/recipes/findByIngredients', queryParameters);
+
+  // Log the URL being requested
+  _logger.i("Requesting URL: $uri");
+
+  final response = await http.get(uri);
+
+  // Log the raw response body
+  _logger.d("Raw API Response: ${response.body}");
+
+  if (response.statusCode == 200) {
+    try {
+      final List<dynamic> data = jsonDecode(response.body);
+
+      if (data.isEmpty) {
+        _logger.w("No recipes found for the provided ingredients");
+        return [];
+      }
+
+      final recipes = data.map((recipe) {
+        return Recipe(
+          id: recipe['id'],
+          title: recipe['title'] ?? 'Untitled Recipe',
+          imageUrl: recipe['image'] ?? '',
+          usedIngredients: (recipe['usedIngredients'] as List<dynamic>)
+              .map((ingredient) => ingredient['original'] as String)
+              .toList(),
+          missedIngredients: (recipe['missedIngredients'] as List<dynamic>)
+              .map((ingredient) => ingredient['original'] as String)
+              .toList(),
+          usedIngredientCount: recipe['usedIngredientCount'] ?? 0,
+          missedIngredientCount: recipe['missedIngredientCount'] ?? 0,
+        );
+      }).toList();
+
+      _logger.i("Recipes found: ${recipes.length}");
+      return recipes;
+    } catch (e) {
+      _logger.e("Error parsing JSON: $e");
+      throw Exception('Failed to parse recipe data');
+    }
+  } else {
+    _logger.w(
+      "Request failed with status: ${response.statusCode} and message: ${response.body}",
+    );
+    throw Exception('Failed to load recipes');
+  }
+}
+
   // Method to fetch detailed nutrition information by recipe ID
+  // Fetch detailed nutrition data
   static Future<Map<String, double>> fetchNutritionData(int recipeId) async {
     final apiKey = await _loadApiKey();
     final url = '$_baseUrl/$recipeId/nutritionWidget.json?apiKey=$apiKey';
 
-    _logger.i("Fetching nutrition data for recipe ID: $recipeId"); // Log the recipe ID being fetched
+    _logger.i("Fetching nutrition data for recipe ID: $recipeId");
     final response = await http.get(Uri.parse(url));
 
     if (response.statusCode == 200) {
       try {
         final Map<String, dynamic> data = jsonDecode(response.body);
-
-        // Extract nutrient values and cast to double with default fallback
         final nutritionData = {
           "calories": _extractNutrientAmount(data, "Calories"),
           "fat": _extractNutrientAmount(data, "Fat"),
@@ -79,11 +128,11 @@ class ApiService {
         };
         return nutritionData;
       } catch (e) {
-        _logger.e("Error parsing JSON for nutrition data: $e"); // Log parsing error
+        _logger.e("Error parsing JSON for nutrition data: $e");
         throw Exception('Failed to parse nutrition data');
       }
     } else {
-      _logger.w("Request for nutrition data failed with status: ${response.statusCode} and message: ${response.body}"); // Log status and response body for debugging
+      _logger.w("Request for nutrition data failed with status: ${response.statusCode} and message: ${response.body}");
       throw Exception('Failed to load nutrition data');
     }
   }
@@ -95,7 +144,7 @@ class ApiService {
       return (nutrient["amount"] as num).toDouble();
     } catch (e) {
       _logger.w("Could not extract nutrient amount for $nutrientName: $e");
-      return 0.0; // Return default value if extraction fails
+      return 0.0;
     }
   }
 
@@ -104,18 +153,18 @@ class ApiService {
     final apiKey = await _loadApiKey();
     final url = '$_baseUrl/$recipeId/information?apiKey=$apiKey&includeNutrition=true';
 
-    _logger.i("Fetching recipe details for ID: $recipeId"); // Log detail request
+    _logger.i("Fetching recipe details for ID: $recipeId");
     final response = await http.get(Uri.parse(url));
 
     if (response.statusCode == 200) {
       try {
         return jsonDecode(response.body);
       } catch (e) {
-        _logger.e("Error parsing recipe details JSON: $e"); // Log parsing error
+        _logger.e("Error parsing recipe details JSON: $e");
         throw Exception('Failed to parse recipe details');
       }
     } else {
-      _logger.w("Request for recipe details failed with status: ${response.statusCode}"); // Log as a warning
+      _logger.w("Request for recipe details failed with status: ${response.statusCode}");
       throw Exception('Failed to load recipe details');
     }
   }
