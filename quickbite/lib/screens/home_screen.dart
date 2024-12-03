@@ -42,34 +42,45 @@ class HomeScreenState extends State<HomeScreen> {
   }
 
   void _findMeals() {
-  if (query.isNotEmpty) {
-    filters['type'] = 'query'; // Search by query
-    filters['query'] = query;
-  } else if (filters['includeIngredients'] != null && filters['includeIngredients'].isNotEmpty) {
-    filters['type'] = 'ingredients'; // Search by ingredients
+    // Log the current state of filters and query
+    _logger.d("Current query: $query");
+    _logger.d("Current filters: $filters");
 
-    // Convert the comma-separated string into a list of strings
-    filters['includeIngredients'] = filters['includeIngredients']
-        .split(',')
-        .map((ingredient) => ingredient.trim())
-        .toList();
-  } else {
-    // Log a warning if no valid input is provided
-    _logger.e("No valid input provided. Either query or includeIngredients is required.");
-    return;
+    // If there's a query, use it as the primary search method
+    if (query.isNotEmpty) {
+      filters['type'] = 'query';
+      filters['query'] = query;
+    } 
+    // If there are ingredients, use them as the search method
+    else if (filters['includeIngredients'] != null && filters['includeIngredients'].isNotEmpty) {
+      filters['type'] = 'ingredients';
+      
+      // Convert the comma-separated string into a list of strings if needed
+      if (filters['includeIngredients'] is String) {
+        filters['includeIngredients'] = filters['includeIngredients']
+            .split(',')
+            .map((ingredient) => ingredient.trim())
+            .where((ingredient) => ingredient.isNotEmpty)
+            .toList();
+      }
+    }
+    // If neither query nor ingredients are provided, just use the filters
+    else {
+      filters['type'] = 'query';
+      filters['query'] = ''; // Empty query to search with just filters
+    }
+
+    // Log the final filters being passed
+    _logger.d("Final filters being applied: $filters");
+
+    // Navigate to RecipeResultsScreen
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => RecipeResultsScreen(filters: filters),
+      ),
+    );
   }
-
-  // Log the filters being passed
-  _logger.d("Filters applied: $filters");
-
-  // Navigate to RecipeResultsScreen
-  Navigator.push(
-    context,
-    MaterialPageRoute(
-      builder: (context) => RecipeResultsScreen(filters: filters),
-    ),
-  );
-}
 
   void _openSavedFilters() {
     Navigator.push(

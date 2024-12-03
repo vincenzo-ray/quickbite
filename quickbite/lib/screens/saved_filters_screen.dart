@@ -16,6 +16,7 @@ class SavedFiltersScreen extends StatefulWidget {
   State<SavedFiltersScreen> createState() => _SavedFiltersScreenState();
 }
 
+
 class _SavedFiltersScreenState extends State<SavedFiltersScreen> {
   List<SavedFilter> _savedFilters = [];
 
